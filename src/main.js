@@ -38,16 +38,23 @@ async function main(){
 
     function animate() {
         requestAnimationFrame(animate);
+        
         handTracker.update();
-
-        // const indexFingerPos = handTracker.getIndexFinger();
-        let fingersUp = handTracker.fingers_up();
-        if (fingersUp.length >= 4) {
+        
+        let handCoordinates = handTracker.get_handcoordinates(handTracker.hand_zero);
+        let fingersUp = handTracker.fingers_up(handTracker.hand_zero);
+        if (fingersUp.length >= 4 && handCoordinates.length > 0) {
+            let indexFingerPos = handCoordinates[20];
+            fireScene.changemodel_position(5*indexFingerPos.ndcx, 5*indexFingerPos.ndcy + 1, 0);
             fireScene.showMesh();
         } else {
             fireScene.hideMesh();
         }
-        // console.log("Coordenadas do dedo indicador:",indexFingerPos);
+        let handRotation = handTracker.get_handrotation(handTracker.hand_zero);
+        if (handRotation !== null) {
+            fireScene.rotate_model(handRotation);
+        }
+        
         fireScene.render();
 
     }

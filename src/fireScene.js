@@ -48,7 +48,7 @@ export class FireScene {
             this.scene.add(this.pivot);
             this.pivot.add(fire);
             this.pivot.scale.setScalar(5); 
-            this.pivot.position.set(4, 0, 0); 
+            // this.pivot.position.set(4, 0, 0); 
 
             this.mixer = new THREE.AnimationMixer(fire);
 
@@ -65,12 +65,27 @@ export class FireScene {
     showMesh() {
         if (this.pivot) {
             this.pivot.visible = true;
+            
         }
     }
 
     hideMesh() {
         if (this.pivot) {
             this.pivot.visible = false;
+        }
+    }
+
+    changemodel_position(x, y, z) {
+        if (this.pivot){
+            this.pivot.position.x = x;
+            this.pivot.position.y = y;
+            this.pivot.position.z = z;
+           
+        }
+    }
+    rotate_model(angle) {
+        if (this.pivot){
+            this.pivot.rotation.y = -angle;
         }
     }
     render() {

@@ -14,7 +14,10 @@ export class HandTracker {
   constructor(video) {
     this.video = video;
     this.handLandmarker = null;
-    this.lastVideoTime = -1;
+    this.hand_zero = 0;
+    this.hand_one = 1;
+    this.results = null;
+    
   }
 
   async init() {
@@ -32,26 +35,47 @@ export class HandTracker {
     }); // Criar uma instância do detector de mãos 
     }
 
-    getIndexFinger() {
-        if (!this.handLandmarker) return null; // Verificar se o modelo de detecção de mãos foi carregado
+    get_handcoordinates(hand) {
+       let lmList = [];
+       if (this.results && this.results.landmarks && this.results.landmarks.length > 0) {
+        // console.log("results", this.results);
 
-        const now = performance.now();
+        const handLms = this.results.landmarks[hand];
+        for (let i=0; i <handLms.length; i++){
+          const x = handLms[i].x;
+          const y = handLms[i].y;
+          const z = handLms[i].z;
 
-        if (this.video.currentTime !== this.lastVideoTime) {
-        this.lastVideoTime = this.video.currentTime;
+          const videoWidth = this.video.videoWidth;
+          const videoHeight = this.video.videoHeight;
 
-        const results = this.handLandmarker.detectForVideo(this.video, now);
-        // console.log("resultados:", results);
-        if (results.landmarks.length > 0) {
-            // console.log("results",results.landmarks); // Imprimir as coordenadas do dedo indicador
-            return results.landmarks[0][8]; // dedo indicador
+          const cx = x * videoWidth;
+          const cy = y * videoHeight;
+          const ndcx =  -((cx / videoWidth)* 2 -1); 
+          const ndcy = -((cy / videoHeight) * 2 -1 );
+          lmList.push({i, x, y, z, cx, cy, ndcx, ndcy});
         }
-        }
-
-        return null;
     }
+    return lmList;
+  }
+  get_handrotation(hand){
+    if (!this.results || !this.results.landmarks || this.results.landmarks.length === 0) {
+        return null;
+      }
+    const handLms = this.results.landmarks[hand];
+    const p1 = handLms[5];
+    const p2= handLms[17];
 
-    fingers_up() {
+    const deltaX = p2.x - p1.x;
+    const deltaY = p2.y - p1.y;
+
+    const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+
+    return angle;
+    
+  }
+
+    fingers_up(hand) {
 
 
       if (!this.results || 
@@ -63,7 +87,8 @@ export class HandTracker {
       let fingers=[];
       let tipIds=[4,8,12,16,20];
       if (this.results.landmarks.length > 0) {
-        let handLms=this.results.landmarks[0];
+        let handLms=this.results.landmarks[hand];
+        // console.log("handLms", handLms);
         if(handLms[tipIds[0]].x < handLms[tipIds[0]-1].x){
           fingers.push(1);
         } 
@@ -73,9 +98,7 @@ export class HandTracker {
           } 
         }
       }
-      // if (fingers.length == 0){
-      //   return "Dedos Levantados";
-      // }
+      
       return fingers
     }
   update() {
